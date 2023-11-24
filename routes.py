@@ -8,7 +8,7 @@ from models import User, Role
 
 
 # Ruta para listar todos los usuarios
-@app.route('/incor/heal', methods=['GET'])
+@app.route('/incor', methods=['GET'])
 def heal():
     return "estamos bien"
 
@@ -184,7 +184,7 @@ def admin_route():
 #         db.session.commit()
 
 #     return jsonify({'message': 'Usuario registrado exitosamente!'}), 201
-#     #endregion
+   #endregion
 
 # Ruta para crear un nuevo rol
 @app.route('/incor/create_role', methods=['POST'])
