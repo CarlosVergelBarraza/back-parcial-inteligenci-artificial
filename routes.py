@@ -7,10 +7,15 @@ from app import app, db
 from models import User, Role
 
 
+# Ruta para listar todos los usuarios
+@app.route('/incor/heal', methods=['GET'])
+def heal():
+    return "estamos bien"
+
 #region logeo
 
 # Ruta para registrar un nuevo usuario
-@app.route('/register', methods=['POST'])
+@app.route('/incor/register', methods=['POST'])
 def register():
     data = request.get_json()
 
@@ -41,7 +46,7 @@ def register():
     return jsonify({'message': 'Usuario registrado exitosamente!'}), 201
 
 # Ruta para asignar un rol a un usuario existente
-@app.route('/assign_role', methods=['POST'])
+@app.route('/incor/assign_role', methods=['POST'])
 def assign_role():
     data = request.get_json()
 
@@ -69,7 +74,7 @@ def assign_role():
 
 
 # Ruta para autenticación de usuarios
-@app.route('/login', methods=['POST'])
+@app.route('/incor/login', methods=['POST'])
 def login():
     data = request.get_json()
     username = data.get('username')
@@ -91,7 +96,7 @@ def login():
 #region listas
 
 # Ruta para listar todos los usuarios
-@app.route('/users', methods=['GET'])
+@app.route('/incor/users', methods=['GET'])
 def list_users():
     with app.app_context():
         users = User.query.all()
@@ -107,7 +112,7 @@ def list_users():
 
         return jsonify({'users': users_list}), 200
 # Ruta para listar roles y usuarios asociados
-@app.route('/roles', methods=['GET'])
+@app.route('/incor/roles', methods=['GET'])
 def list_roles():
     with app.app_context():
         roles = Role.query.all()
@@ -130,7 +135,7 @@ def list_roles():
 #region protegidas
     #region adminRoleOnly
     # Ruta protegida por token JWT y rol de administrador
-@app.route('/admin', methods=['GET'])
+@app.route('/incor/admin', methods=['GET'])
 @jwt_required()
 def admin_route():
     current_user = get_jwt_identity()
@@ -141,48 +146,48 @@ def admin_route():
         else:
             return jsonify({'message': 'Acceso denegado. Se requiere rol de administrador'}), 403
 
-# Ruta para registrar un nuevo usuario con uno o varios roles
-@app.route('/register-adim', methods=['POST'])
-@jwt_required()
-def registerAdmin():
-    current_user = get_jwt_identity()
+# # Ruta para registrar un nuevo usuario con uno o varios roles
+# @app.route('/incor/register-adim', methods=['POST'])
+# @jwt_required()
+# def registerAdmin():
+#     current_user = get_jwt_identity()
 
-    with app.app_context():
-        if 'admin' in current_user['roles']:
-            print("admin create user")
-        else:
-            return jsonify({'message': 'Acceso denegado. Se requiere rol de administrador'}), 403
-    data = request.get_json()
+#     with app.app_context():
+#         if 'admin' in current_user['roles']:
+#             print("admin create user")
+#         else:
+#             return jsonify({'message': 'Acceso denegado. Se requiere rol de administrador'}), 403
+#     data = request.get_json()
 
-    # Verificar que los roles proporcionados existen
-    role_names = data.get('roles', [])
-    roles = Role.query.filter(Role.name.in_(role_names)).all()
-    if len(roles) != len(role_names):
-        return jsonify({'message': 'Uno o más roles no válidos'}), 400
+#     # Verificar que los roles proporcionados existen
+#     role_names = data.get('roles', [])
+#     roles = Role.query.filter(Role.name.in_(role_names)).all()
+#     if len(roles) != len(role_names):
+#         return jsonify({'message': 'Uno o más roles no válidos'}), 400
 
-    # Intentar eliminar un usuario existente con el mismo nombre
-    existing_user = User.query.filter_by(username=data['username']).first()
-    if existing_user:
-        db.session.delete(existing_user)
-        db.session.commit()
+#     # Intentar eliminar un usuario existente con el mismo nombre
+#     existing_user = User.query.filter_by(username=data['username']).first()
+#     if existing_user:
+#         db.session.delete(existing_user)
+#         db.session.commit()
 
-    # Crear un nuevo usuario y asignar roles
-    new_user = User(username=data['username'], password=data['password'])
-    new_user.roles.extend(roles)
+#     # Crear un nuevo usuario y asignar roles
+#     new_user = User(username=data['username'], password=data['password'])
+#     new_user.roles.extend(roles)
 
-    # Limpiar la sesión antes de agregar el nuevo usuario
-    db.session.expunge_all()
+#     # Limpiar la sesión antes de agregar el nuevo usuario
+#     db.session.expunge_all()
 
-    # Agregar el nuevo usuario a la sesión y realizar la commit
-    with app.app_context():
-        db.session.add(new_user)
-        db.session.commit()
+#     # Agregar el nuevo usuario a la sesión y realizar la commit
+#     with app.app_context():
+#         db.session.add(new_user)
+#         db.session.commit()
 
-    return jsonify({'message': 'Usuario registrado exitosamente!'}), 201
-    #endregion
+#     return jsonify({'message': 'Usuario registrado exitosamente!'}), 201
+#     #endregion
 
 # Ruta para crear un nuevo rol
-@app.route('/create_role', methods=['POST'])
+@app.route('/incor/create_role', methods=['POST'])
 @jwt_required()
 def create_role():
     data = request.get_json()
