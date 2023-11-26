@@ -4,7 +4,9 @@ from flask_jwt_extended import JWTManager, jwt_required, create_access_token, ge
 from flask_migrate import Migrate
 from flask import request, jsonify
 from app import app, db
+import pandas as pd
 from models.models import User, Role
+from predecir import preditcModel, train_model
 
 
 # Ruta para listar todos los usuarios
@@ -133,8 +135,57 @@ def list_roles():
 #endregion 
 
 
+@app.route('/owner_user', methods=['GET'])
+@jwt_required()
+def owner_user():
+    current_user = get_jwt_identity()
 
+    with app.app_context():
+        user=current_user['username']
+        print(user)
+        infouser = User.query.filter_by(username=user).first()
+        print(infouser.username)
+        return jsonify(identity={'username': infouser.username}), 200
+    
+@app.route('/update_password', methods=['PUT'])
+@jwt_required()
+def update_password():
+    current_user = get_jwt_identity()
 
+    with app.app_context():
+        user=current_user['username']
+        print(user)
+        infouser = User.query.filter_by(username=user).first()
+        print(infouser.username)
+        return jsonify(identity={'username': infouser.username}), 200
+    
+@app.route('/predict', methods=['POST'])
+@jwt_required()
+def predit():
+    try:
+        # Receive the form data as JSON
+        form_data = request.get_json()
+        
+
+        required_fields = ["GENDER", "Car_Owner", "Propert_Owner", "CHILDREN", "Annual_income",
+                        "Type_Income", "EDUCATION", "Marital_status", "Housing_type", "Birthday_count", 
+                        "Employed_days", "Mobile_phone", "Work_Phone", "Phone", "EMAIL_ID", "Type_Occupation", 
+                        "Family_Members"]
+        for field in required_fields:
+            if form_data.get(field) is None or form_data.get(field) == "":
+                return jsonify(erros={'error': f"El campo '{field}' es nulo. Parámetro inválido.", 'field':field}), 200
+        current_user = get_jwt_identity()
+
+        with app.app_context():
+            user=current_user['username']
+            # print(user)
+            infouser = User.query.filter_by(username=user).first()
+            
+            resultado=preditcModel(form_data)
+            return jsonify(predict=resultado[0]), 200
+    except Exception as e:
+        return jsonify({'error': str(e)})
+    
 #region protegidas
     #region adminRoleOnly
     # Ruta protegida por token JWT y rol de administrador
