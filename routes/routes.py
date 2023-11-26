@@ -4,23 +4,24 @@ from flask_jwt_extended import JWTManager, jwt_required, create_access_token, ge
 from flask_migrate import Migrate
 from flask import request, jsonify
 from app import app, db
-from models import User, Role
+from models.models import User, Role
 
 
 # Ruta para listar todos los usuarios
-@app.route('/incor', methods=['GET'])
+@app.route('/', methods=['GET'])
 def heal():
     return "estamos bien"
 
 #region logeo
 
 # Ruta para registrar un nuevo usuario
-@app.route('/incor/register', methods=['POST'])
+@app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
 
     # Verificar que los roles proporcionados existen
-    role_names = data.get('roles', [])
+    # role_names = data.get('roles', [])
+    role_names = ["client"]
     roles = Role.query.filter(Role.name.in_(role_names)).all()
     if len(roles) != len(role_names):
         return jsonify({'message': 'Uno o más roles no válidos'}), 400
@@ -28,8 +29,9 @@ def register():
     # Intentar eliminar un usuario existente con el mismo nombre
     existing_user = User.query.filter_by(username=data['username']).first()
     if existing_user:
-        db.session.delete(existing_user)
-        db.session.commit()
+        return jsonify({'message': 'Usuario Ya existe'}), 400
+        # db.session.delete(existing_user)
+        # db.session.commit()
 
     # Crear un nuevo usuario y asignar roles
     new_user = User(username=data['username'], password=data['password'])
@@ -43,10 +45,11 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
+    # Crear un token que incluya información sobre los roles del usuario
     return jsonify({'message': 'Usuario registrado exitosamente!'}), 201
 
 # Ruta para asignar un rol a un usuario existente
-@app.route('/incor/assign_role', methods=['POST'])
+@app.route('/assign_role', methods=['POST'])
 def assign_role():
     data = request.get_json()
 
@@ -74,7 +77,7 @@ def assign_role():
 
 
 # Ruta para autenticación de usuarios
-@app.route('/incor/login', methods=['POST'])
+@app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     username = data.get('username')
@@ -87,7 +90,7 @@ def login():
             # Crear un token que incluya información sobre los roles del usuario
             roles = [role.name for role in user.roles]
             access_token = create_access_token(identity={'username': user.username, 'roles': roles})
-            return jsonify(access_token=access_token)
+            return jsonify(access_token=access_token, roles=roles)
         else:
             return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
 
@@ -96,7 +99,7 @@ def login():
 #region listas
 
 # Ruta para listar todos los usuarios
-@app.route('/incor/users', methods=['GET'])
+@app.route('/users', methods=['GET'])
 def list_users():
     with app.app_context():
         users = User.query.all()
@@ -112,7 +115,7 @@ def list_users():
 
         return jsonify({'users': users_list}), 200
 # Ruta para listar roles y usuarios asociados
-@app.route('/incor/roles', methods=['GET'])
+@app.route('/roles', methods=['GET'])
 def list_roles():
     with app.app_context():
         roles = Role.query.all()
@@ -135,7 +138,7 @@ def list_roles():
 #region protegidas
     #region adminRoleOnly
     # Ruta protegida por token JWT y rol de administrador
-@app.route('/incor/admin', methods=['GET'])
+@app.route('/admin', methods=['GET'])
 @jwt_required()
 def admin_route():
     current_user = get_jwt_identity()
@@ -187,7 +190,7 @@ def admin_route():
    #endregion
 
 # Ruta para crear un nuevo rol
-@app.route('/incor/create_role', methods=['POST'])
+@app.route('/create_role', methods=['POST'])
 @jwt_required()
 def create_role():
     data = request.get_json()

@@ -1,6 +1,8 @@
-from flask_sqlalchemy import SQLAlchemy
+# models.py
+from app import db
 
-db = SQLAlchemy()
+
+
 # Tabla intermedia para la relación muchos a muchos entre usuarios y roles
 user_roles = db.Table('user_roles',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
